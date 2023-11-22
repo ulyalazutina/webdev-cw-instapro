@@ -1,4 +1,4 @@
-import { addPost, getPosts } from "./api.js";
+import { addPost, getPosts, getPostsUser } from "./api.js";
 import { renderAddPostPageComponent } from "./components/add-post-page-component.js";
 import { renderAuthPageComponent } from "./components/auth-page-component.js";
 import {
@@ -69,9 +69,19 @@ export const goToPage = (newPage, data) => {
     if (newPage === USER_POSTS_PAGE) {
       // TODO: реализовать получение постов юзера из API
       console.log("Открываю страницу пользователя: ", data.userId);
-      page = USER_POSTS_PAGE;
-      posts = [];
-      return renderApp();
+
+      return getPostsUser({
+        token: getToken(),
+        id: data.userId,
+      }).then((newPosts) => {
+        page = USER_POSTS_PAGE;
+        posts = newPosts;
+        return renderApp();
+      })
+      .catch((error) => {
+        console.error(error);
+        goToPage(POSTS_PAGE);
+      });
     }
 
     page = newPage;
@@ -116,12 +126,13 @@ const renderApp = () => {
           token: getToken(),
           description,
           imageUrl,
-        }).then(() => {
-          goToPage(POSTS_PAGE);
         })
-        .catch((error) => {
-          alert("Заполнены не все поля");
-        });
+          .then(() => {
+            goToPage(POSTS_PAGE);
+          })
+          .catch((error) => {
+            alert("Заполнены не все поля");
+          });
       },
     });
   }
@@ -134,9 +145,11 @@ const renderApp = () => {
 
   if (page === USER_POSTS_PAGE) {
     // TODO: реализовать страницу фотографию пользвателя
-    appEl.innerHTML = "Здесь будет страница фотографий пользователя";
-    return;
+    return renderPostsPageComponent({
+      appEl,
+    });
+
   }
 };
 
-goToPage(ADD_POSTS_PAGE);
+goToPage(POSTS_PAGE);

@@ -91,3 +91,22 @@ export function addPost({ token, description, imageUrl }) {
       return data.posts;
     });
 }
+
+export function getPostsUser({ token, id }) {
+  return fetch(postsHost + "/user-posts/" + id, {
+    method: "GET",
+    headers: {
+      Authorization: token,
+    },
+  })
+    .then((response) => {
+      if (response.status === 401) {
+        throw new Error("Нет авторизации");
+      }
+
+      return response.json();
+    })
+    .then((data) => {
+      return data.posts;
+    });
+}
