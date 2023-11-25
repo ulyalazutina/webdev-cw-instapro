@@ -28,9 +28,9 @@ export function registerUser({ login, password, name, imageUrl }) {
   return fetch(baseHost + "/api/user", {
     method: "POST",
     body: JSON.stringify({
-      login,
-      password,
-      name,
+      login: login.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+      password: password.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+      name: name.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
       imageUrl,
     }),
   }).then((response) => {
@@ -45,8 +45,8 @@ export function loginUser({ login, password }) {
   return fetch(baseHost + "/api/user/login", {
     method: "POST",
     body: JSON.stringify({
-      login,
-      password,
+      login: login.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+      password: password.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
     }),
   }).then((response) => {
     if (response.status === 400) {
@@ -76,10 +76,9 @@ export function addPost({ token, description, imageUrl }) {
       Authorization: token,
     },
     body: JSON.stringify({
-      description: description.replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;"),
-      imageUrl
-    })
+      description: description.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+      imageUrl,
+    }),
   })
     .then((response) => {
       if (response.status === 400) {
@@ -118,13 +117,12 @@ export function addLike({ token, postId }) {
     headers: {
       Authorization: token,
     },
-  })
-    .then((response) => {
-      if (response.status === 401) {
-        throw new Error("Лайкать посты могут только авторизованные пользователи");
-      }
-      return response.json();
-    })
+  }).then((response) => {
+    if (response.status === 401) {
+      throw new Error("Лайкать посты могут только авторизованные пользователи");
+    }
+    return response.json();
+  });
 }
 
 export function removeLike({ token, postId }) {
@@ -133,11 +131,24 @@ export function removeLike({ token, postId }) {
     headers: {
       Authorization: token,
     },
-  })
-    .then((response) => {
-      if (response.status === 401) {
-        throw new Error("Лайкать посты могут только авторизованные пользователи");
-      }
-      return response.json();
-    })
+  }).then((response) => {
+    if (response.status === 401) {
+      throw new Error("Лайкать посты могут только авторизованные пользователи");
+    }
+    return response.json();
+  });
+}
+
+export function deletePost({ token, postId }) {
+  return fetch(`${postsHost}/${postId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: token,
+    },
+  }).then((response) => {
+    if (response.status === 401) {
+      throw new Error("Удалять посты могут только авторизованные пользователи");
+    }
+    return response.json();
+  });
 }
