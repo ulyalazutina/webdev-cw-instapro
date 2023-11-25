@@ -1,11 +1,10 @@
 import { USER_POSTS_PAGE } from "../routes.js";
 import { renderHeaderComponent } from "./header-component.js";
-import { posts, goToPage, getToken, renderApp } from "../index.js";
+import { posts, goToPage, getToken, renderApp, user } from "../index.js";
 import { addLike, deletePost, removeLike } from "../api.js";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-
-function getLike({elem}) {
+function getLike({ elem }) {
   const postId = elem.dataset.postId;
   const index = elem.dataset.index;
   if (!posts[index].isLiked) {
@@ -46,6 +45,7 @@ export function renderPostsPageComponent({ appEl }) {
     const createDate = formatDistanceToNow(new Date(post.createdAt), {
       locale: ru,
     });
+console.log(user)
     return `
     <div class="page-container">
       <div class="header-container"></div>
@@ -56,11 +56,12 @@ export function renderPostsPageComponent({ appEl }) {
             post.user.imageUrl
           }" class="post-header__user-image">
           <p class="post-header__user-name">${post.user.name}</p></div>
-          <button data-post-id="${
-            post.id
-          }" class="deleteBtn" title="Удалить пост">
-          &times;
-          </button>
+
+          ${ (user ? 
+              (user._id === post.user.id ? 
+                `<button data-post-id="${post.id}" class="deleteBtn" title="Удалить пост">&times;</button>`
+                : "") 
+              : "")}
           </div>
           <div class="post-image-container" data-post-id="${
             post.id
@@ -114,7 +115,7 @@ export function renderPostsPageComponent({ appEl }) {
   for (const likeButtonElement of likeButtonsElement) {
     likeButtonElement.addEventListener("click", (e) => {
       e.stopPropagation();
-      getLike({elem: likeButtonElement});
+      getLike({ elem: likeButtonElement });
     });
   }
 
@@ -125,9 +126,13 @@ export function renderPostsPageComponent({ appEl }) {
       deletePost({
         token: getToken(),
         postId,
-      }).then(() => {
-        renderApp();
-      });
+      })
+        .then(() => {
+          renderApp();
+        })
+        .catch((error) => {
+          alert("Удалять посты могут только авторизованные пользователи");
+        });
     });
   }
 
@@ -135,7 +140,7 @@ export function renderPostsPageComponent({ appEl }) {
   for (const imageElement of imageElements) {
     imageElement.addEventListener("dblclick", (e) => {
       e.stopPropagation();
-      getLike({elem: imageElement});
+      getLike({ elem: imageElement });
     });
   }
 }
