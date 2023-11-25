@@ -2,8 +2,37 @@ import { USER_POSTS_PAGE } from "../routes.js";
 import { renderHeaderComponent } from "./header-component.js";
 import { posts, goToPage, getToken, renderApp } from "../index.js";
 import { addLike, deletePost, removeLike } from "../api.js";
-import { formatDistance } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
+
+function getLike({elem}) {
+  const postId = elem.dataset.postId;
+  const index = elem.dataset.index;
+  if (!posts[index].isLiked) {
+    addLike({
+      token: getToken(),
+      postId,
+    })
+      .then(() => {
+        posts[index].isLiked = true;
+        posts[index].likes.length++;
+        renderApp();
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("Авторизуйтесь, чтобы лайкнуть пост");
+      });
+  } else {
+    removeLike({
+      token: getToken(),
+      postId,
+    }).then(() => {
+      posts[index].isLiked = false;
+      posts[index].likes.length--;
+      renderApp();
+    });
+  }
+}
 
 export function renderPostsPageComponent({ appEl }) {
   // TODO: реализовать рендер постов из api
@@ -14,20 +43,28 @@ export function renderPostsPageComponent({ appEl }) {
    * можно использовать https://date-fns.org/v2.29.3/docs/formatDistanceToNow
    */
   appEl.innerHTML = posts.map((post, index) => {
-    const createDate = formatDistance(new Date(post.createdAt), new Date, {locale: ru});
+    const createDate = formatDistanceToNow(new Date(post.createdAt), {
+      locale: ru,
+    });
     return `
     <div class="page-container">
       <div class="header-container"></div>
       <ul class="posts">
         <li class="post">
           <div class="post-header" data-user-id="${post.user.id}">
-          <div class="post-container"><img src="${post.user.imageUrl}" class="post-header__user-image">
+          <div class="post-container"><img src="${
+            post.user.imageUrl
+          }" class="post-header__user-image">
           <p class="post-header__user-name">${post.user.name}</p></div>
-          <button data-post-id="${post.id}" class="deleteBtn" title="Удалить пост">
+          <button data-post-id="${
+            post.id
+          }" class="deleteBtn" title="Удалить пост">
           &times;
           </button>
           </div>
-          <div class="post-image-container">
+          <div class="post-image-container" data-post-id="${
+            post.id
+          }" data-index="${index}">
             <img class="post-image" src="${post.imageUrl}">
           </div>
           <div class="post-likes">
@@ -77,32 +114,7 @@ export function renderPostsPageComponent({ appEl }) {
   for (const likeButtonElement of likeButtonsElement) {
     likeButtonElement.addEventListener("click", (e) => {
       e.stopPropagation();
-      const postId = likeButtonElement.dataset.postId;
-      const index = likeButtonElement.dataset.index;
-      if (!posts[index].isLiked) {
-        addLike({
-          token: getToken(),
-          postId,
-        })
-          .then(() => {
-            posts[index].isLiked = true;
-            posts[index].likes.length++;
-            renderApp();
-          })
-          .catch((error) => {
-            console.error(error);
-            alert("Авторизуйтесь, чтобы лайкнуть пост");
-          });
-      } else {
-        removeLike({
-          token: getToken(),
-          postId,
-        }).then(() => {
-          posts[index].isLiked = false;
-          posts[index].likes.length--;
-          renderApp();
-        });
-      }
+      getLike({elem: likeButtonElement});
     });
   }
 
@@ -116,6 +128,14 @@ export function renderPostsPageComponent({ appEl }) {
       }).then(() => {
         renderApp();
       });
+    });
+  }
+
+  const imageElements = document.querySelectorAll(".post-image-container");
+  for (const imageElement of imageElements) {
+    imageElement.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      getLike({elem: imageElement});
     });
   }
 }
