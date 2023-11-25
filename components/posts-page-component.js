@@ -37,7 +37,7 @@ export function renderPostsPageComponent({ appEl }) {
             <p class="post-likes-text">
               Нравится: <strong>${
                 post.likes.length > 1
-                  ? post.likes[0].name + "и ещё " + (post.likes.length - 1)
+                  ? post.likes[0].name + " и ещё " + (post.likes.length - 1)
                   : post.likes.length
               }</strong>
             </p>
@@ -78,11 +78,11 @@ export function renderPostsPageComponent({ appEl }) {
         })
           .then(() => {
             posts[index].isLiked = true;
-          })
-          .then(() => {
+            posts[index].likes.length++;
             renderApp();
           })
           .catch((error) => {
+            console.error(error);
             alert("Авторизуйтесь, чтобы лайкнуть пост");
           });
       } else {
@@ -92,10 +92,9 @@ export function renderPostsPageComponent({ appEl }) {
         })
           .then(() => {
             posts[index].isLiked = false;
-          })
-          .then(() => {
+            posts[index].likes.length--;
             renderApp();
-          });
+          })
       }
     });
   }

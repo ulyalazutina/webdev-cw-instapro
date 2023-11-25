@@ -76,7 +76,8 @@ export function addPost({ token, description, imageUrl }) {
       Authorization: token,
     },
     body: JSON.stringify({
-      description,
+      description: description.replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;"),
       imageUrl
     })
   })
