@@ -1,6 +1,7 @@
 import { USER_POSTS_PAGE } from "../routes.js";
 import { renderHeaderComponent } from "./header-component.js";
-import { posts, goToPage } from "../index.js";
+import { posts, goToPage, getToken, renderApp } from "../index.js";
+import { addLike, getPosts, removeLike } from "../api.js";
 
 export function renderPostsPageComponent({ appEl }) {
   // TODO: реализовать рендер постов из api
@@ -10,7 +11,7 @@ export function renderPostsPageComponent({ appEl }) {
    * TODO: чтобы отформатировать дату создания поста в виде "19 минут назад"
    * можно использовать https://date-fns.org/v2.29.3/docs/formatDistanceToNow
    */
-  appEl.innerHTML = posts.map((post)=> {
+  appEl.innerHTML = posts.map((post, index) => {
     return `
     <div class="page-container">
       <div class="header-container"></div>
@@ -24,11 +25,21 @@ export function renderPostsPageComponent({ appEl }) {
             <img class="post-image" src="${post.imageUrl}">
           </div>
           <div class="post-likes">
-            <button data-post-id="642d00579b190443860c2f32" class="like-button">
-              <img src="./assets/images/like-active.svg">
+            <button data-post-id="${
+              post.id
+            }" class="like-button" data-index="${index}">
+              <img src="${
+                post.isLiked
+                  ? "./assets/images/like-active.svg"
+                  : "./assets/images/like-not-active.svg"
+              }">
             </button>
             <p class="post-likes-text">
-              Нравится: <strong>${post.likes.length}</strong>
+              Нравится: <strong>${
+                post.likes.length > 1
+                  ? post.likes[0].name + "и ещё " + (post.likes.length - 1)
+                  : post.likes.length
+              }</strong>
             </p>
           </div>
           <p class="post-text">
@@ -38,10 +49,10 @@ export function renderPostsPageComponent({ appEl }) {
           <p class="post-date">
           ${post.createdAt}
           </p>
-        </li>  
+        </li>
       </ul>
     </div>`;
-  })
+  });
 
   renderHeaderComponent({
     element: document.querySelector(".header-container"),
@@ -52,6 +63,40 @@ export function renderPostsPageComponent({ appEl }) {
       goToPage(USER_POSTS_PAGE, {
         userId: userEl.dataset.userId,
       });
+    });
+  }
+
+  const likeButtonsElement = document.querySelectorAll(".like-button");
+  for (const likeButtonElement of likeButtonsElement) {
+    likeButtonElement.addEventListener("click", () => {
+      const postId = likeButtonElement.dataset.postId;
+      const index = likeButtonElement.dataset.index;
+      if (!posts[index].isLiked) {
+        addLike({
+          token: getToken(),
+          postId,
+        })
+          .then(() => {
+            posts[index].isLiked = true;
+          })
+          .then(() => {
+            renderApp();
+          })
+          .catch((error) => {
+            alert("Авторизуйтесь, чтобы лайкнуть пост");
+          });
+      } else {
+        removeLike({
+          token: getToken(),
+          postId,
+        })
+          .then(() => {
+            posts[index].isLiked = false;
+          })
+          .then(() => {
+            renderApp();
+          });
+      }
     });
   }
 }
